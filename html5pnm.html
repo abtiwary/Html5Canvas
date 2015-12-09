@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title></title>
+
+<style type="text/css">
+div.dropbox {
+    width: 400px;
+    height: 200px;
+    border: 2px solid black;
+}
+</style>
+
+<script type="text/javascript">
+var fr;
+function doInit() {
+    dropbox = document.getElementById('drop_box');
+    dropbox.innerHTML = '<p>loaded!</p>';
+
+    canvas = document.getElementById('canvas');
+    ctx = canvas.getContext('2d');
+
+    dropbox.addEventListener("dragenter", handleDragEnter, false);
+    dropbox.addEventListener("dragover", handleDragOver, false);
+    dropbox.addEventListener("drop", handleDrop, false);
+}
+window.addEventListener("load", doInit, false);
+
+function handleDragEnter(e) {
+    e.preventDefault();
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    var files = e.dataTransfer.files;
+    var count = files.length;
+
+    var file = files[0];
+    fr = new FileReader();
+    fr.onload = receivedBinary;
+    fr.readAsBinaryString(file);
+}
+
+function receivedBinary()
+{
+    fLines = []; //line 0 -> header, line 1 -> dims, line 2 -> depth 
+    fComments = [];
+    bPgm = false; 
+    bPnm = false;
+    strDims = "";
+    strDepth = "";
+    sData = "";
+
+    res = fr.result;
+    res = res.replace('\r\n', '\n');
+
+    op = "";
+    iMarker = 0;
+    iNbLines = 0;
+    bImgData = false;
+    for (var i=0; i < res.length; ++i)
+    {
+        op += res[i];
+
+        if (!bImgData)
+        {
+            if (res[i] == '\n')
+            {
+                if (op.indexOf('#') != 0)
+                {
+                    fLines.push(op);
+                    iNbLines += 1;
+
+                    if(iNbLines == 2)
+                    {
+                        strDims = op;
+                    }
+                    if(iNbLines == 3)
+                    {
+                        strDepth = op;
+                        bImgData = true;
+                    }
+                    op = "";
+                }
+                else
+                {
+                    fComments.push(op);
+                    op = "";
+                }
+            }
+            iMarker = i;
+            if (res[i] == 'P' && res[i+1] == '5')
+            {
+                bPgm = true;
+            }
+            else if (res[i] == 'P' && res[i+1] == '6')
+            {
+                bPnm = true;
+            }
+        }
+    }
+
+    strData = op;
+
+    imgDataSize = strData.length;
+
+    iWidth = parseInt(strDims.split(" ")[0]);
+    iHeight = parseInt(strDims.split(" ")[1]);
+
+    ctx.canvas.width = iWidth;
+    ctx.canvas.height = iHeight;
+
+    var imagedata = ctx.createImageData(iWidth, iHeight);
+    var count = 0;
+    for (var i=0; i < iHeight; ++i)
+    {
+        for (var j=0; j < iWidth; ++j)
+        {
+            var avg = 0;
+            var r = 0;
+            var g = 0;
+            var b = 0;
+
+            if (bPgm)
+            {
+                avg = strData.charCodeAt(j + i * iWidth);
+                imagedata.data[count] = avg;
+	            imagedata.data[count+1] = avg;
+	            imagedata.data[count+2] = avg;
+                imagedata.data[count+3] = 255;
+            }
+            else if (bPnm)
+            {
+                r = strData.charCodeAt(3 * i * iWidth + 3 * j);
+                g = strData.charCodeAt(3 * i * iWidth + 3 * j + 1);
+                b = strData.charCodeAt(3 * i * iWidth + 3 * j + 2);
+                imagedata.data[count] = r;
+	            imagedata.data[count+1] = g;
+	            imagedata.data[count+2] = b;
+                imagedata.data[count+3] = 255;
+            }
+
+            count = count + 4;
+        }
+    }
+
+    //alert(count);
+    ctx.putImageData(imagedata, 0, 0);
+}
+
+</script>
+</head>
+
+<body>
+    <br />
+    <br />
+    <div class="dropbox" id="drop_box">
+    
+    </div>
+
+    <br />
+
+    <canvas id="canvas"></canvas>
+    
+</body>
+
+</html>
+

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+                <html lang="en">
+                <head>
+                <title>Canvas Histogram</title>
+                <script type="text/javascript" src="./flot/jquery.min.js"></script>
+                <script type="text/javascript" src="./flot/jquery.flot.min.js"></script>
+                <script type="text/javascript" src="./flot/jquery.flot.navigate.min.js"></script>  
+
+                <script type="text/javascript">
+                var image;
+                var canvas;
+                var ctx;
+                var origImageData;
+                var histoy = new Array();
+                var histo = [];
+                </script>
+                
+                <style type="text/css">
+                #preload {
+                  position: absolute;
+                  display: none;
+                }
+                .placeholder {
+                  width: 800px;
+                  height: 400px;
+                }
+                </style>
+                </head>
+
+                <body onload="fOnLoad()">
+                <p style="font-family: 'Verdana'; font-size=10; font-weight:bold;">Canvas Histogram</p>
+                <br />
+
+                <canvas id="canvas"></canvas>
+                <br />
+                <br />
+
+                <div id="placeholder" class="placeholder"></div>
+
+                <div id="preload">
+                <img src="./pss80.jpg" width="1" height="1" />
+                </div>
+
+                <script type="text/javascript">
+                $(document).ready ( function() {
+                    image = new Image();
+                    image.src = './pss80.jpg';
+
+                    canvas = document.getElementById('canvas');
+                    ctx = canvas.getContext('2d');
+
+                    ctx.canvas.width = image.width;
+                    ctx.canvas.height = image.height;
+
+                    ctx.drawImage(image,0,0,ctx.canvas.width,ctx.canvas.height);
+
+                    origImageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+
+                    for(var i=0; i < 256; i++)
+                    {
+                        histoy[i] = 0;
+                    }
+
+                    for(var i=0; i < origImageData.data.length - 3; i+=4)
+                    {
+                        var r = origImageData.data[i];
+                        var g = origImageData.data[i+1];
+                        var b = origImageData.data[i+2];
+                        var a = origImageData.data[i+3];
+
+                        histoy[r] += 1;
+                    }
+                    
+                    for(var i=0; i < 256; i++)
+                    {
+                        histo.push([ i, histoy[i] ]);
+                    }
+                    //alert(histo[128]);
+                }); 
+
+                $(function () {
+             
+var options = {
+                    xaxis: {
+                        min: 0
+                    },
+                    yaxis: {
+                        min: 0, 
+                        show: true
+                    },
+                    grid: {
+                        hoverable: true,
+                        clickable: true,
+                        backgroundColor: { colors: ["#fff", "#eee"] }
+                    },
+                    series: {
+                        lines: {show: true, fill : true},
+                        points: {show: true}
+                    },
+                    zoom: {interactive: true},
+                    pan: {interactive: true},
+                }
+var plot = $.plot(("#placeholder"), [histo], options); 
+                function showTooltip(x, y, contents) {
+                    $('<div id="tooltip">' + contents + '</div>').css( {
+                        position: 'absolute',
+                        display: 'none',
+                        top: y + 5,
+                        left: x + 5,
+                        border: '1px solid #fdd',
+                        padding: '2px',
+                        'background-color': '#fee',
+                        opacity: 0.80
+                    }).appendTo("body").fadeIn(200);
+                }
+
+
+                var previousPoint = null;
+                $("#placeholder").bind("plothover", function (event, pos, item) {
+
+                    if (item) {
+                        if (previousPoint != item.dataIndex) {
+                            previousPoint = item.dataIndex;
+                    
+                            $("#tooltip").remove();
+                            var x = item.datapoint[0],
+                                y = item.datapoint[1];
+                    
+                            showTooltip(item.pageX, item.pageY,
+                                x + " = " + y);
+                        }
+                    }
+                    else {
+                        $("#tooltip").remove();
+                        previousPoint = null;            
+                    }
+                });
+
+                $("#placeholder").bind("plotpan", function (event, plot) {
+                    var axes = plot.getaxes(); 
+
+                });
+
+                $("#placeholder").bind("plotzoom", function (event, plot) {
+                    var axes = plot.getaxes(); 
+
+                });
+
+            });
+</script></body></html>

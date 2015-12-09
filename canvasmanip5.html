@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Canvas Manipulation</title>	
+<style type="text/css">
+#preload {
+position: absolute;
+display:none;
+}
+</style>
+
+<script type="text/javascript">
+var canvas; 
+var ctx;
+var canvasr; 
+var ctxr;
+var canvasg; 
+var ctxg;
+var canvasb; 
+var ctxb;
+var canvast; 
+var ctxt;
+var canvasi; 
+var ctxi;
+var origImageData;
+
+function fOnload()
+{
+    image = new Image();
+    //image.src = 'max.jpg';
+    //image.src = 'lena.jpg';
+    //image.src = 'colortest.jpg';
+    image.src = 'pss80.jpg';
+    
+    //draw on the canvas once the image loads
+    image.onload = thisFirst();
+}
+
+function thisFirst()
+{
+    canvas = document.getElementById('canvas');
+    canvasr = document.getElementById('canvasr');
+    canvasg = document.getElementById('canvasg');
+    canvasb = document.getElementById('canvasb');
+    canvast = document.getElementById('canvast');
+    canvasi = document.getElementById('canvasi');
+    
+    ctx = canvas.getContext('2d');
+    ctxr = canvasr.getContext('2d');
+    ctxg = canvasg.getContext('2d');
+    ctxb = canvasb.getContext('2d');
+    ctxt = canvast.getContext('2d');
+    ctxi = canvasi.getContext('2d');
+    
+    //force canvas to image size 
+    ctx.canvas.width = image.width;
+    ctx.canvas.height = image.height;
+
+    ctxr.canvas.width = image.width;
+    ctxr.canvas.height = image.height;
+    
+    ctxg.canvas.width = image.width;
+    ctxg.canvas.height = image.height;
+    
+    ctxb.canvas.width = image.width;
+    ctxb.canvas.height = image.height;
+
+    ctxt.canvas.width = image.width;
+    ctxt.canvas.height = image.height;
+
+    ctxi.canvas.width = image.width;
+    ctxi.canvas.height = image.height;
+
+    ctx.drawImage(image, 0, 0, ctx.canvas.width, ctx.canvas.height);
+ 
+    //save original image data to restore on mouseout 
+    origImageData = ctx.getImageData(0, 0, canvas.width, canvas.height); 
+}
+
+function omOver()
+{
+    //alert(ctx.canvas.width + ", " + ctx.canvas.height);
+    canvas = document.getElementById('canvas');
+    ctx = canvas.getContext('2d');
+
+    //for sepia 
+    var depth = 32;
+
+    var imagedata = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    //alert(imagedata.data.length);
+
+    for(var i=0; i < imagedata.data.length - 3; i+=4)
+    {
+	    var r = imagedata.data[i];
+	    var g = imagedata.data[i+1];
+	    var b = imagedata.data[i+2];
+	    var a = imagedata.data[i+3];
+            
+	    var rr = r + (depth * 2);
+	    var gg = g + depth;
+	    if (rr <= ((depth * 2) - 1))
+	    {
+		rr = 255; 
+	    }
+	    if(gg <= (depth - 1))
+	    {
+	        gg = 255;
+	    }
+	    imagedata.data[i] = rr;
+	    imagedata.data[i+1] = gg;
+	    imagedata.data[i+2] = b;
+	    imagedata.data[i+3] = 255;
+    }
+    
+    ctx.putImageData(imagedata, 0, 0);
+}
+
+function omClick()
+{
+    //alert(ctx.canvas.width + ", " + ctx.canvas.height);
+    canvas = document.getElementById('canvas');
+    ctx = canvas.getContext('2d');
+
+    var imagedata = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    //alert(imagedata.data.length);
+
+    var imagedatar = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var imagedatag = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var imagedatab = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var imagedatat = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var imagedatai = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    for(var i=0; i < imagedata.data.length - 3; i+=4)
+    {
+	    var r = imagedata.data[i];
+	    var g = imagedata.data[i+1];
+	    var b = imagedata.data[i+2];
+	    var a = imagedata.data[i+3];
+	    //var avg = (r + g + b + a) / 4;
+	    var avg = (r + g + b) / 3;
+	    imagedata.data[i] = avg;
+	    imagedata.data[i+1] = avg;
+	    imagedata.data[i+2] = avg;
+	    imagedata.data[i+3] = 255;
+
+	    var avgt = 0;
+	    if(avg > 127)
+	    {
+		avgt = 255;
+	    }
+	    else
+	    {
+		avgt = 0;
+	    }
+
+	    imagedatat.data[i] = avgt;
+	    imagedatat.data[i+1] = avgt;
+	    imagedatat.data[i+2] = avgt;
+	    imagedatat.data[i+3] = 255;
+
+	    imagedatar.data[i] = imagedata.data[i];
+	    imagedatar.data[i+1] = 0;
+	    imagedatar.data[i+2] = 0;
+	    imagedatar.data[i+3] = 255;
+
+	    imagedatag.data[i] = 0;
+	    imagedatag.data[i+1] = imagedata.data[i+1];
+	    imagedatag.data[i+2] = 0;
+	    imagedatag.data[i+3] = 255;
+
+	    imagedatab.data[i] = 0;
+	    imagedatab.data[i+1] = 0;
+	    imagedatab.data[i+2] = imagedata.data[i+2];
+        imagedatab.data[i+3] = 255;
+
+        imagedatai.data[i] = Math.abs(255 - r);
+	    imagedatai.data[i+1] = Math.abs(255 - g);
+	    imagedatai.data[i+2] = Math.abs(255 - b);
+	    imagedatai.data[i+3] = 255;
+    }
+    
+    ctx.putImageData(imagedata, 0, 0);
+
+    ctxr.putImageData(imagedatar, 0, 0);
+    ctxg.putImageData(imagedatag, 0, 0);
+    ctxb.putImageData(imagedatab, 0, 0);
+    ctxt.putImageData(imagedatat, 0, 0);
+    ctxi.putImageData(imagedatai, 0, 0);
+}
+
+function omOut()
+{
+    ctx.putImageData(origImageData, 0, 0);
+}
+
+</script>
+</head>
+
+<body onload="fOnload()">
+    <div id="preload">
+        <img src="colortest.jpg" width="1" height="1" />
+        <img src="lena.jpg" width="1" height="1" />
+        <img src="max.jpg" width="1" height="1" />
+        <img src="pss80.jpg" width="1" height="1" />
+    </div>
+    <canvas id="canvas" onmouseover="omOver()" onmouseout="omOut()" onclick="omClick()"></canvas>
+    <br />
+    <p>Red Channel</p>
+    <canvas id="canvasr"></canvas>
+    <br />
+    <p>Green Channel</p>
+    <canvas id="canvasg"></canvas>
+    <br />
+    <p>Blue Channel</p>
+    <canvas id="canvasb"></canvas>
+    <br />
+    <p>Thresholded</p>
+    <canvas id="canvast"></canvas>
+    <p>Inverted</p>
+    <canvas id="canvasi"></canvas>
+</body>
+</html>
